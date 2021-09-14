@@ -1,6 +1,6 @@
-use std::sync::atomic::{AtomicBool, Ordering};
 use std::cell::UnsafeCell;
 use std::ops::{Deref, DerefMut};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 struct TryMutex<T> {
     locked: AtomicBool,
@@ -41,9 +41,7 @@ impl<T> TryMutex<T> {
 
     pub fn try_lock(&self) -> Option<TryMutexGuard<T>> {
         if self.locked.fetch_or(true, Ordering::AcqRel) == false {
-            Some(TryMutexGuard {
-                lock: self,
-            })
+            Some(TryMutexGuard { lock: self })
         } else {
             None
         }
@@ -54,4 +52,3 @@ unsafe impl<T: Send> Sync for TryMutex<T> {}
 unsafe impl<T: Send> Send for TryMutex<T> {}
 unsafe impl<'a, T: Sync> Sync for TryMutexGuard<'a, T> {}
 unsafe impl<'a, T: Send> Send for TryMutexGuard<'a, T> {}
-
