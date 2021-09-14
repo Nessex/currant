@@ -1,4 +1,4 @@
-# Conc
+# Currant
 
 Concurrency primitives, implemented as a learning excercise.
 
