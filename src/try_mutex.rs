@@ -2,7 +2,7 @@ use std::cell::UnsafeCell;
 use std::ops::{Deref, DerefMut};
 use std::sync::atomic::{AtomicBool, Ordering};
 
-struct TryMutex<T> {
+pub struct TryMutex<T> {
     locked: AtomicBool,
     value: UnsafeCell<T>,
 }
@@ -52,3 +52,38 @@ unsafe impl<T: Send> Sync for TryMutex<T> {}
 unsafe impl<T: Send> Send for TryMutex<T> {}
 unsafe impl<'a, T: Sync> Sync for TryMutexGuard<'a, T> {}
 unsafe impl<'a, T: Send> Send for TryMutexGuard<'a, T> {}
+
+#[cfg(test)]
+mod tests {
+    use std::sync::Arc;
+    use std::time::Duration;
+    use crate::TryMutex;
+
+    #[test]
+    fn try_lock() {
+        let mtx = Arc::new(TryMutex::new(0usize));
+        let mtx_2 = mtx.clone();
+
+        let h1 = std::thread::spawn(move || {
+            let g = match mtx.try_lock() {
+                None => panic!(),
+                Some(g) => g,
+            };
+
+            assert_eq!(*g, 0);
+            std::thread::sleep(Duration::from_millis(500));
+        });
+
+        std::thread::sleep(Duration::from_millis(50));
+
+        let h2 = std::thread::spawn(move || {
+            match mtx_2.try_lock() {
+                None => assert!(true),
+                Some(_) => panic!(),
+            }
+        });
+
+        h1.join().unwrap();
+        h2.join().unwrap();
+    }
+}

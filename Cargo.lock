@@ -3,5 +3,5 @@
 version = 3
 
 [[package]]
-name = "conc"
+name = "currant"
 version = "0.1.0"
